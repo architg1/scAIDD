@@ -2,12 +2,18 @@
 getHaplotypes <- function (sample_name, chrom_names, vcf_prefix, output_folder) {
   vcf_all_chr <- list()
   for (i in 1:length(chrom_names)) {
-    vcf_all_chr[[i]] <- VariantAnnotation::readVcf(paste0(vcf_prefix,chrom_names[i],".vcf"), "grch38")
+    if (file.exists(paste0(vcf_prefix,chrom_names[i],".vcf.gz"))) {
+      vcf_file = paste0(vcf_prefix,chrom_names[i],".vcf.gz")
+    } else {
+      vcf_file = paste0(vcf_prefix,chrom_names[i],".vcf")
+    }
+    vcf_all_chr[[i]] <- VariantAnnotation::readVcf(vcf_file, "grch38")
   }
   # return(vcf_all_chr)
   
   haplotype_alleles <- lapply(1:length(vcf_all_chr), function(x) {
     genotype <- as.data.frame(VariantAnnotation::geno(vcf_all_chr[[x]])$GT, rownames = "name") %>% rownames_to_column(var = "name")
+    genotype <- genotype[genotype[,2] == "0|1" | genotype[,2] == "1|0",]#Keep heterozygous SNPS
     position <- as.data.frame(GenomicRanges::granges(rowRanges(vcf_all_chr[[x]]))) %>% add_column("name" = names(vcf_all_chr[[x]]))
     haplotypes <- left_join(genotype, position, by = "name") %>%
       mutate(genotype = gsub(".*_","",name)) %>% 

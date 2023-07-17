@@ -4,25 +4,26 @@ require(tidyr)
 require(tibble)
 require(GenomicRanges)
 require(VariantAnnotation)
-run_scAIDD_10XscRNA <- function(sample_name,
-                                bam_file,
-                                output_folder,
-                                loci_folder,
-                                vcf_prefix,
-                                chrom_names = paste0("chr", 1:22),
-                                min_base_qual = 20,
-                                min_map_qual = 0,
-                                req_flag = 0,
-                                filtered_flag = 0,
-                                tenX = T,
-                                allelecounter.exe="alleleCounter",
-                                nbcores = 8) {
+
+run_scAIDD_10X <- function(sample_name,
+                           bam_file,
+                           output_folder,
+                           loci_folder,
+                           vcf_prefix,
+                           chrom_names = paste0("chr", 1:22),
+                           min_base_qual = 20,
+                           min_map_qual = 0,
+                           req_flag = 0,
+                           filtered_flag = 0,
+                           tenX = T,
+                           allelecounter_path="alleleCounter",
+                           nbcores = 8) {
   
   system(paste0("mkdir -p ",output_folder,"Allele_Freq/"))
 
   
-  if (!all(file.exists(paste0(output_folder, "/Allele_Freq/", sample_name, "_alleleFrequencies_chr", 1:length(chrom_names), ".txt")))) {
-    chr_to_run <- which(!file.exists(paste0(output.dir, "/Allele_Freq/", "test", "_alleleFrequencies_chr", 1:length(chrom.names), ".txt")))
+  if (!all(file.exists(paste0(output_folder, "/Allele_Freq/", sample_name, "_alleleFrequencies_chr", chrom_names, ".txt")))) {
+    chr_to_run <- which(!file.exists(paste0(output.dir, "/Allele_Freq/", "test", "_alleleFrequencies_chr", chrom_names, ".txt")))
     print(paste0("Running allelecounter on ", paste0(chrom_names[chr_to_run], collapse = " "), " for ", sample_name))
     parallel::mclapply(chr_to_run,function(i) {
       alleleCounter(bam_file = bam_file,
@@ -33,7 +34,7 @@ run_scAIDD_10XscRNA <- function(sample_name,
                     req_flag = req_flag,
                     filtered_flag = filtered_flag,
                     tenX = tenX,
-                    allelecounter.exe = allelecounter.exe)
+                    allelecounter_path = allelecounter_path)
     },mc.cores=nbcores)
   } else {
     print(paste0("Allelecounter already run on ", paste0(chrom_names, collapse = " "), " for ", sample_name))
