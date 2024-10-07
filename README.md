@@ -1,2 +1,2 @@
-# scAIDD_v2
+# scAIDDv2
 Quantification of allelic imbalance in single cells/spots
