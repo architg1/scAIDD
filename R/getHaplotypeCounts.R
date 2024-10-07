@@ -37,9 +37,32 @@ getHaplotypeCounts <- function (sample_name, chrom_names, output_folder, haploty
                  by = c("POS" = "POS", "bases" = "haplo_2"))
   })
   
+  #cell_both_haplotype_counts <- do.call(rbind, haplo_1_counts_all) %>%
+    #dplyr::group_by(Barcode) %>% summarise(Haplo_1_Count = sum(Count)) %>%
+    #left_join(do.call(rbind, haplo_2_counts_all) %>%
+                #dplyr::group_by(Barcode) %>% summarise(Haplo_2_Count = sum(Count)), by = "Barcode")
+
+  # Normalize by SNP count
   cell_both_haplotype_counts <- do.call(rbind, haplo_1_counts_all) %>%
-    dplyr::group_by(Barcode) %>% summarise(Haplo_1_Count = sum(Count)) %>%
-    left_join(do.call(rbind, haplo_2_counts_all) %>%
-                dplyr::group_by(Barcode) %>% summarise(Haplo_2_Count = sum(Count)), by = "Barcode")
+  dplyr::group_by(Barcode) %>%
+  summarise(
+    Haplo_1_Count = sum(Count),
+    Total_Occurrences_1 = n()  # Count the number of rows for each barcode
+  ) %>%
+  left_join(
+    do.call(rbind, haplo_2_counts_all) %>%
+      dplyr::group_by(Barcode) %>%
+      summarise(
+        Haplo_2_Count = sum(Count),
+        Total_Occurrences_2 = n()  # Count the number of rows for each barcode
+      ), 
+    by = "Barcode"
+  ) %>%
+  mutate(
+    Haplo_1_Count = Haplo_1_Count / Total_Occurrences_1,  # Normalize by row count
+    Haplo_2_Count = Haplo_2_Count / Total_Occurrences_2  # Normalize by row count
+  )
+
+
   return(cell_both_haplotype_counts)
 }
